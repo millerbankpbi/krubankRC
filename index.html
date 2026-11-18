@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#EFEAF8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>KrubankRC จอยบังคับหุ่น</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%232E2443' stroke='%23B6A3EE' stroke-width='6'/%3E%3Ccircle cx='32' cy='32' r='9' fill='%2327C98F'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#EFEAF8; --ink:#2B2240; --muted:#776B92; --line:#D3C7EE; --card:#FBF9FE;
+  --plum:#2E2443; --plum2:#463864; --mint:#27C98F; --coral:#EC6A5E; --amber:#EBA42C; --lilac:#B6A3EE;
+  --font:"Noto Sans Thai","Sarabun","Leelawadee UI","Thonburi","Tahoma",system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45}
+body{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  background-image:radial-gradient(#D8CDEF 1.1px,transparent 1.3px);background-size:24px 24px}
+button,select,input{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- แถบบน ---------- */
+.bar{position:fixed;left:0;right:0;top:0;height:54px;display:flex;align-items:center;gap:8px;
+  padding:8px max(10px,env(safe-area-inset-right)) 8px max(10px,env(safe-area-inset-left));z-index:5}
+.pill{height:38px;border-radius:19px;border:1px solid var(--line);background:rgba(255,255,255,.78);
+  display:flex;align-items:center;gap:6px;padding:0 14px;font-weight:600;font-size:14px;white-space:nowrap;cursor:pointer}
+.pill:focus-visible,.tool:focus-visible,.sheet button:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+.icon{width:38px;padding:0;justify-content:center;font-size:18px}
+select.pill{appearance:none;-webkit-appearance:none;padding-right:28px;
+  background:rgba(255,255,255,.78) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%232B2240' stroke-width='1.6' fill='none'/%3E%3C/svg%3E") no-repeat right 12px center}
+#status{flex:1;min-width:0;justify-content:center;overflow:hidden;font-weight:500}
+#status b{font-weight:700}
+#status .sep{color:var(--line)}
+.meter{display:inline-flex;gap:3px;align-items:flex-end;height:22px}
+.meter i{display:block;width:6px;height:22px;border-radius:3px;background:#E6DEF6;position:relative;overflow:hidden}
+.meter i::after{content:"";position:absolute;left:0;right:0;bottom:50%;height:var(--h,0%);background:var(--mint);border-radius:2px}
+.meter i.neg::after{bottom:auto;top:50%;background:var(--coral)}
+#link{min-width:150px;justify-content:center}
+#link .dot{width:10px;height:10px;border-radius:50%;background:var(--coral);flex:none}
+#link.on{background:#E2F8EF;border-color:#9EE3C7}
+#link.on .dot{background:var(--mint)}
+#link.wait .dot{background:var(--amber);animation:blink 1s infinite}
+#link.weak .dot{background:var(--amber)}
+#link.demo .dot{background:var(--lilac)}
+@keyframes blink{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){#link.wait .dot{animation:none}}
+@media (max-width:700px){.hide-s{display:none}#link{min-width:0}}
+
+/* ---------- พื้นที่บังคับ ---------- */
+#stage{position:fixed;left:0;right:0;top:54px;bottom:0;touch-action:none;overflow:hidden}
+.ctl{position:absolute;transform:translate(-50%,-50%);touch-action:none}
+.face{width:100%;height:100%;transition:transform .06s}
+
+/* ปุ่ม */
+.btn .face{border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 36% 30%,var(--plum2),var(--plum) 72%);
+  border:3px solid var(--c);color:var(--c);font-size:calc(var(--d)*.42);font-weight:700;
+  box-shadow:0 7px 16px rgba(43,34,64,.28),inset 0 0 calc(var(--d)*.18) rgba(255,255,255,.08);
+  text-shadow:0 0 10px var(--c)}
+.btn.txt .face{font-size:calc(var(--d)*.26)}
+.btn.down .face{transform:scale(.92);box-shadow:0 0 0 4px rgba(255,255,255,.7),0 0 22px var(--c)}
+.btn.lit .face{background:radial-gradient(circle at 36% 30%,var(--c),var(--plum) 95%);color:#fff;text-shadow:none}
+.lbl{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:3px;font-size:12px;font-weight:600;
+  white-space:nowrap;color:var(--muted);pointer-events:none}
+.stop .face{border-radius:50%;display:grid;place-items:center;background:var(--coral);color:#fff;font-weight:700;
+  font-size:calc(var(--d)*.27);box-shadow:0 6px 14px rgba(236,106,94,.4);border:3px solid #fff}
+.stop.down .face{transform:scale(.92)}
+
+/* คันโยก */
+.stick .face{border-radius:999px;position:relative;background:radial-gradient(circle,#fff 0 56%,#F5F1FC 57%);
+  border:3px solid #D9CDF3;box-shadow:0 10px 24px rgba(43,34,64,.12)}
+.stick.ax-x .face,.stick.ax-y .face{background:#fff}
+.stick .face::before,.stick .face::after{content:"";position:absolute;background:#E7DFF7;pointer-events:none}
+.stick .face::before{left:50%;top:12%;bottom:12%;width:2px;margin-left:-1px}
+.stick .face::after{top:50%;left:12%;right:12%;height:2px;margin-top:-1px}
+.stick.ax-x .face::before,.stick.ax-y .face::after{display:none}
+.stick.active .face{border-color:var(--mint)}
+.knob{position:absolute;left:50%;top:50%;width:var(--k);height:var(--k);margin:calc(var(--k)/-2) 0 0 calc(var(--k)/-2);
+  border-radius:50%;background:#fff;box-shadow:0 5px 14px rgba(43,34,64,.28);pointer-events:none;display:grid;place-items:center}
+.knob::after{content:"";width:28%;height:28%;border-radius:50%;background:var(--lilac)}
+.stick.active .knob::after{background:var(--mint)}
+
+/* ปุ่มทิศ */
+.dpad .face{position:relative;border-radius:50%;background:rgba(255,255,255,.7);border:3px solid #D9CDF3}
+.arrow{position:absolute;width:32%;height:32%;border-radius:22%;display:grid;place-items:center;color:var(--lilac);
+  background:radial-gradient(circle at 36% 30%,var(--plum2),var(--plum) 72%);font-size:calc(var(--d)*.12);pointer-events:none;
+  box-shadow:0 4px 10px rgba(43,34,64,.25)}
+.arrow.u{left:34%;top:2%}.arrow.d{left:34%;bottom:2%}.arrow.l{top:34%;left:2%}.arrow.r{top:34%;right:2%}
+.arrow.on{color:#fff;background:var(--mint);box-shadow:0 0 16px var(--mint)}
+
+/* โหมดจัดวาง */
+body.editing .ctl{outline:2px dashed rgba(119,107,146,.55);outline-offset:5px;border-radius:12px;cursor:move}
+body.editing .ctl.sel{outline:3px dashed var(--mint)}
+body.editing.grid #stage{background-image:linear-gradient(rgba(182,163,238,.35) 1px,transparent 1px),linear-gradient(90deg,rgba(182,163,238,.35) 1px,transparent 1px);
+  background-size:calc(100% / 20) calc(100% / 12)}
+#tools{display:none;gap:6px;justify-content:center;flex-wrap:nowrap}
+body.editing #tools{display:flex}
+.play{display:contents}
+body.editing .play{display:none}
+.tool{height:38px;min-width:46px;white-space:nowrap;border-radius:19px;border:1px solid var(--line);background:rgba(255,255,255,.85);
+  font-size:15px;font-weight:600;padding:0 12px;cursor:pointer}
+.tool:disabled{opacity:.35}
+.tool.ok{background:var(--mint);border-color:var(--mint);color:#fff}
+.tool.on{background:var(--plum);color:#fff;border-color:var(--plum)}
+.tool.danger{color:var(--coral)}
+
+/* ---------- แผ่นตั้งค่า ---------- */
+.sheet{position:fixed;inset:0;background:rgba(43,34,64,.38);display:none;align-items:center;justify-content:center;z-index:20;padding:10px}
+.sheet.open{display:flex}
+.panel{background:var(--card);border-radius:22px;width:min(600px,100%);max-height:100%;overflow:auto;padding:16px 18px 18px;
+  box-shadow:0 20px 50px rgba(43,34,64,.3);user-select:text;-webkit-user-select:text;touch-action:pan-y}
+.panel h2{font-size:18px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.panel h2 .x{margin-left:auto}
+.panel h3{font-size:15px;margin:16px 0 6px}
+.panel p{margin:6px 0}
+.hint{color:var(--muted);font-size:13.5px}
+.seg{display:flex;background:#ECE6F8;border-radius:14px;padding:3px;gap:3px;margin-bottom:12px}
+.seg button{flex:1;border:0;background:transparent;border-radius:11px;padding:8px 6px;font-weight:600;cursor:pointer;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 2px 6px rgba(43,34,64,.12)}
+.row{display:flex;align-items:center;gap:10px;margin:9px 0;flex-wrap:wrap}
+.row>label{min-width:132px;font-weight:600;font-size:14px}
+.row input[type=range]{flex:1;min-width:140px;accent-color:var(--plum)}
+.row output{min-width:48px;text-align:right;font-weight:700}
+.row input[type=text],.row input[type=number],.row select{flex:1;min-width:120px;height:38px;border-radius:10px;border:1px solid var(--line);
+  background:#fff;padding:0 10px}
+.row input[type=checkbox]{width:22px;height:22px;accent-color:var(--plum)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.act{height:40px;border-radius:12px;border:1px solid var(--line);background:#fff;padding:0 16px;font-weight:700;cursor:pointer}
+.act.main{background:var(--plum);border-color:var(--plum);color:#fff}
+.act.go{background:var(--mint);border-color:var(--mint);color:#fff}
+.act.warn{color:var(--coral);border-color:#F3C2BC}
+.choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.choice button{border:2px solid var(--line);background:#fff;border-radius:14px;padding:10px;text-align:left;cursor:pointer}
+.choice button b{display:block;font-size:15px}
+.choice button span{font-size:12.5px;color:var(--muted)}
+.choice button.on{border-color:var(--plum);box-shadow:0 0 0 2px var(--plum) inset}
+.blist{display:flex;flex-direction:column;gap:6px}
+.bitem{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px 8px}
+.bitem .mini{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:700;flex:none;
+  background:var(--plum);color:var(--c);border:2px solid var(--c)}
+.bitem .t{flex:1;min-width:0}
+.bitem .t b{display:block}
+.bitem .t code{font-size:12.5px;color:var(--muted)}
+.bitem button{border:1px solid var(--line);background:#fff;border-radius:10px;height:34px;padding:0 10px;cursor:pointer}
+.swatches{display:flex;gap:6px;flex-wrap:wrap}
+.swatches button{width:30px;height:30px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer}
+.swatches button.on{box-shadow:0 0 0 3px var(--plum)}
+.glyphs{display:flex;gap:4px;flex-wrap:wrap}
+.glyphs button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:17px;cursor:pointer}
+.glyphs button.on{background:var(--plum);color:#fff}
+ol.steps{margin:6px 0;padding-left:22px}
+ol.steps li{margin:3px 0}
+code{background:#EEE8F9;border-radius:6px;padding:1px 6px;font-size:.92em}
+textarea{width:100%;min-height:110px;border-radius:12px;border:1px solid var(--line);padding:8px;font:12px/1.4 ui-monospace,monospace}
+#logbox{height:120px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px 8px;font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap}
+.err{color:var(--coral);font-size:13px;min-height:1.2em}
+
+#toast{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);background:var(--plum);color:#fff;border-radius:16px;
+  padding:8px 16px;font-size:14px;font-weight:600;z-index:30;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+#rotate{position:fixed;left:10px;right:10px;bottom:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 12px;
+  font-size:13.5px;display:none;z-index:6;align-items:center;gap:8px}
+@media (orientation:portrait){body:not(.norot) #rotate{display:flex}}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="play">
+    <button class="pill icon" id="gear" aria-label="ตั้งค่า" title="ตั้งค่า">⚙</button>
+    <select class="pill" id="speedSel" aria-label="ความเร็ว"></select>
+    <button class="pill" id="status" aria-label="ปรับความแรง">
+      <span class="meter" aria-hidden="true"><i id="mL"></i><i id="mR"></i></span>
+      <b id="cmd" class="num">0, 0</b>
+      <span class="hide-s"><span class="sep">|</span> DRV <b id="drv" class="num">70%</b> <span class="sep">|</span> TRN <b id="trn" class="num">55%</b></span>
+      <span class="sep">|</span> <span id="rtt" class="num">– ms</span>
+      <span id="batt" class="num hide-s"></span>
+    </button>
+    <button class="pill" id="link"><span class="dot"></span><span id="linkTxt">ยังไม่เชื่อมต่อ</span></button>
+    <button class="pill icon" id="editBtn" aria-label="จัดวางปุ่ม" title="จัดวางปุ่ม">✎</button>
+    <button class="pill icon hide-s" id="fsBtn" aria-label="เต็มจอ" title="เต็มจอ">⛶</button>
+  </div>
+  <div id="tools">
+    <button class="tool ok" id="tDone" title="เสร็จ">✓ เสร็จ</button>
+    <button class="tool" id="tSmall" title="เล็กลง">−</button>
+    <button class="tool" id="tBig" title="ใหญ่ขึ้น">+</button>
+    <button class="tool" id="tGrid" title="จัดตามตาราง">▦</button>
+    <button class="tool" id="tUndo" title="ย้อนกลับ">↶</button>
+    <button class="tool" id="tRedo" title="ทำซ้ำ">↷</button>
+    <button class="tool" id="tEditB" title="แก้ปุ่มที่เลือก">แก้ปุ่ม</button>
+    <button class="tool" id="tAdd" title="เพิ่มปุ่ม">＋ปุ่ม</button>
+    <button class="tool danger" id="tHide" title="ซ่อนที่เลือก">ซ่อน</button>
+    <button class="tool" id="tReset" title="คืนค่าตำแหน่ง">⟲</button>
+  </div>
+</header>
+
+<main id="stage" aria-label="พื้นที่บังคับ"></main>
+<div id="rotate">หมุนมือถือเป็นแนวนอนจะบังคับถนัดกว่า <button class="act" style="margin-left:auto;height:32px" onclick="document.body.classList.add('norot')">ปิด</button></div>
+<div id="toast" role="status"></div>
+
+<!-- เชื่อมต่อ -->
+<div class="sheet" id="shLink"><div class="panel">
+  <h2>เชื่อมต่อหุ่น <button class="act x" data-close>ปิด</button></h2>
+  <div class="choice" id="linkChoice">
+    <button data-k="wifi"><b>WiFi</b><span>หุ่นต่อ hotspot มือถือ ตอบสนองไว</span></button>
+    <button data-k="ble"><b>Bluetooth</b><span>ไม่ต้องใช้ WiFi เปิดหน้านี้จาก https</span></button>
+    <button data-k="demo"><b>ทดลอง</b><span>ไม่มีหุ่น ลองจอยดูก่อน</span></button>
+  </div>
+  <div id="wifiBox">
+    <div class="row"><label for="ipIn">IP ของหุ่น</label><input type="text" id="ipIn" inputmode="decimal" placeholder="ดูบนจอหุ่น เช่น 172.20.10.3"></div>
+    <div class="err" id="wifiErr"></div>
+  </div>
+  <div id="bleBox"><div class="err" id="bleErr"></div></div>
+  <div class="btnrow">
+    <button class="act go" id="connectBtn">เชื่อมต่อ</button>
+    <button class="act warn" id="disconnectBtn">ตัดการเชื่อมต่อ</button>
+  </div>
+  <ol class="steps hint" id="wifiSteps">
+    <li>เปิด hotspot มือถือ ตั้งชื่อและรหัสให้ตรงกับ <code>WIFI_SSID</code> <code>WIFI_PASS</code> ในโค้ด</li>
+    <li>เปิดหุ่น กด <b>UP</b> จอหุ่นจะขึ้น IP</li>
+    <li>เปิด Chrome พิมพ์ <code>http://IP</code> หน้านี้จะต่อให้เอง</li>
+    <li>ถ้าหา hotspot ไม่เจอ หุ่นจะปล่อย WiFi ชื่อ <code>KRUBANKR4</code> เอง ให้มือถือต่อ WiFi นั้นแล้วเปิด <code>http://192.168.4.1</code></li>
+  </ol>
+  <ol class="steps hint" id="bleSteps">
+    <li>เปิดหุ่น กด <b>DOWN</b> จอหุ่นขึ้น <code>BLE KRUBANKR4</code></li>
+    <li>Android ใช้ Chrome (เปิด Bluetooth และตำแหน่ง) iPhone ใช้แอป Bluefy</li>
+    <li>กดเชื่อมต่อ แล้วเลือก <code>KRUBANKR4</code></li>
+  </ol>
+</div></div>
+
+<!-- ปรับความแรง -->
+<div class="sheet" id="shSpeed"><div class="panel">
+  <h2>ความแรง <button class="act x" data-close>ปิด</button></h2>
+  <div class="seg" id="speedSeg"></div>
+  <div class="row"><label for="qDrv">เดินหน้า/ถอย (DRV)</label><input type="range" id="qDrv" min="10" max="100" step="1"><output id="qDrvO"></output></div>
+  <div class="row"><label for="qTrn">เลี้ยว (TRN)</label><input type="range" id="qTrn" min="10" max="100" step="1"><output id="qTrnO"></output></div>
+  <p class="hint">เลื่อนแล้วมีผลทันที แม้กำลังบังคับอยู่ ค่าจะจำไว้กับโหมดความเร็วที่เลือก</p>
+</div></div>
+
+<!-- ตั้งค่า -->
+<div class="sheet" id="shSet"><div class="panel">
+  <h2>ตั้งค่า <button class="act x" data-close>ปิด</button></h2>
+  <div class="seg" id="setTabs">
+    <button data-t="drive" class="on">การขับ</button><button data-t="buttons">ปุ่ม</button><button data-t="more">อื่น ๆ</button>
+  </div>
+  <section data-p="drive">
+    <h3>รูปแบบการบังคับ</h3>
+    <div class="choice" id="modeChoice">
+      <button data-m="joy"><b>คันโยก</b><span>นิ้วเดียว ทั้งวิ่งและเลี้ยว</span></button>
+      <button data-m="split"><b>คันโยกคู่</b><span>ซ้ายวิ่ง ขวาเลี้ยว แบบรถบังคับ</span></button>
+      <button data-m="dpad"><b>ปุ่มทิศ</b><span>ขึ้น ลง ซ้าย ขวา กดเฉียงได้</span></button>
+      <button data-m="tank"><b>แทงก์</b><span>คุมล้อซ้าย/ขวาแยกกัน</span></button>
+    </div>
+    <h3>ความเร็ว 3 ระดับ</h3>
+    <div id="presetRows"></div>
+    <h3>ความรู้สึกคันโยก</h3>
+    <div class="row"><label for="sDead">ระยะไม่ตอบสนองกลางคันโยก</label><input type="range" id="sDead" min="0" max="25" step="1"><output id="sDeadO"></output></div>
+    <div class="row"><label for="sExpo">ความนุ่มช่วงต้น</label><input type="range" id="sExpo" min="10" max="30" step="1"><output id="sExpoO"></output></div>
+    <div class="row"><label for="sTrim">แก้หุ่นวิ่งเฉ</label><input type="range" id="sTrim" min="-25" max="25" step="1"><output id="sTrimO"></output></div>
+    <p class="hint">วิ่งตรงแล้วหุ่นเฉไปทางซ้าย ให้เลื่อนแก้เฉไปทางขวา (+) ทีละนิด</p>
+    <div class="row"><label for="sDpadTurn">ปุ่มทิศ เลี้ยวแบบ</label>
+      <select id="sDpadTurn"><option value="spin">หมุนตัวอยู่กับที่</option><option value="pivot">ล้อเดียว (ใช้ล้อนอกหมุน)</option></select></div>
+    <div class="row"><label for="sInvert">กลับหน้า-หลังหุ่น</label><input type="checkbox" id="sInvert"></div>
+    <div class="row"><label for="sSwap">สลับล้อซ้าย-ขวา</label><input type="checkbox" id="sSwap"></div>
+    <div class="row"><label for="sRate">ส่งคำสั่งต่อวินาที</label><input type="range" id="sRate" min="10" max="40" step="1"><output id="sRateO"></output></div>
+  </section>
+  <section data-p="buttons" hidden>
+    <p class="hint">ปุ่มแต่ละปุ่มส่งข้อความไปที่หุ่น หุ่นจะทำงานตามที่เขียนไว้ในแท็บ <code>Buttons</code> หรือใช้คำสั่งสำเร็จรูป เช่น <code>S2=90</code> <code>S2+5</code> <code>BEEP</code></p>
+    <div class="blist" id="blist"></div>
+    <div class="btnrow"><button class="act main" id="addBtn">＋ เพิ่มปุ่ม</button></div>
+  </section>
+  <section data-p="more" hidden>
+    <div class="row"><label for="sVib">สั่นเมื่อกดปุ่ม</label><input type="checkbox" id="sVib"></div>
+    <div class="row"><label for="sWake">ไม่ให้จอดับระหว่างบังคับ</label><input type="checkbox" id="sWake"></div>
+    <h3>ข้อความที่รับส่ง</h3>
+    <div id="logbox" class="num"></div>
+    <h3>สำรองการตั้งค่า</h3>
+    <p class="hint">คัดลอกข้อความนี้ไปวางในมือถือเครื่องอื่น แล้วกด “นำเข้า” จะได้ปุ่มและตำแหน่งเหมือนกัน</p>
+    <textarea id="jsonBox" spellcheck="false"></textarea>
+    <div class="btnrow">
+      <button class="act" id="copyJson">คัดลอก</button>
+      <button class="act main" id="importJson">นำเข้า</button>
+      <button class="act warn" id="resetAll">ล้างการตั้งค่าทั้งหมด</button>
+    </div>
+  </section>
+</div></div>
+
+<!-- แก้ปุ่ม -->
+<div class="sheet" id="shBtn"><div class="panel">
+  <h2>แก้ปุ่ม <button class="act x" data-close>ปิด</button></h2>
+  <div class="row"><label for="bLabel">ชื่อใต้ปุ่ม</label><input type="text" id="bLabel" maxlength="12"></div>
+  <div class="row"><label>สัญลักษณ์</label><div class="glyphs" id="bGlyphs"></div></div>
+  <div class="row"><label for="bGlyphTxt">หรือพิมพ์เอง</label><input type="text" id="bGlyphTxt" maxlength="3" placeholder="เช่น A, 1"></div>
+  <div class="row"><label>สี</label><div class="swatches" id="bColors"></div></div>
+  <div class="row"><label for="bAct">เมื่อกดปุ่ม</label>
+    <select id="bAct">
+      <option value="send">ส่งข้อความไปหุ่น</option>
+      <option value="toggle">กดสลับ เปิด/ปิด</option>
+      <option value="boost">กดค้างเพื่อเร่งสุด</option>
+      <option value="speed">สลับระดับความเร็ว</option>
+      <option value="stop">หยุดฉุกเฉิน</option>
+    </select></div>
+  <div id="bSendBox">
+    <div class="row"><label for="bDown" id="bDownL">ข้อความตอนกด</label><input type="text" id="bDown" maxlength="16" autocapitalize="characters" placeholder="เช่น KEEP"></div>
+    <div class="row"><label for="bUp" id="bUpL">ข้อความตอนปล่อย</label><input type="text" id="bUp" maxlength="16" autocapitalize="characters" placeholder="เว้นว่างได้"></div>
+    <div class="row" id="bRepRow"><label for="bRep">กดค้างส่งซ้ำทุก</label><input type="number" id="bRep" min="0" max="2000" step="10"><span class="hint">ms (0 = ไม่ส่งซ้ำ)</span></div>
+    <p class="hint">ใช้ตัวอักษรอังกฤษ ตัวเลข และ <code>= + - , @ _</code> ได้ไม่เกิน 16 ตัว</p>
+  </div>
+  <div class="err" id="bErr"></div>
+  <div class="btnrow">
+    <button class="act main" id="bSave">บันทึก</button>
+    <button class="act" id="bTest">ลองส่ง</button>
+    <button class="act warn" id="bDel">ลบปุ่มนี้</button>
+  </div>
+</div></div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const NUS = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const NUS_RX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+const NUS_TX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+const KEY = 'krubankrc.v1';
+const enc = new TextEncoder(), dec = new TextDecoder();
+const clone = o => JSON.parse(JSON.stringify(o));
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const COLORS = ['#8ED65B','#5AA8F5','#F5B83D','#F27BB0','#B6A3EE','#F7D774','#3FD9C4','#F28C5B'];
+const GLYPHS = ['△','✕','□','○','▲','▼','◀','▶','★','♪','⚡','●','✋','⟳'];
+
+// ---------------- ค่าเริ่มต้น ----------------
+const DEFAULTS = {
+  v: 1,
+  link: { kind: 'wifi', ip: '' },
+  drive: {
+    mode: 'joy', preset: 1,
+    presets: [{ n: 'ช้า', d: 40, t: 35 }, { n: 'กลาง', d: 70, t: 55 }, { n: 'เร็ว', d: 100, t: 75 }],
+    dead: 8, expo: 15, trim: 0, dpadTurn: 'spin', invert: false, swap: false, rate: 25
+  },
+  ui: { vib: true, wake: true, grid: true },
+  buttons: [
+    { id: 'b1', label: 'คีบ', g: '△', c: '#8ED65B', act: 'send', down: 'KEEP', up: '', rep: 0 },
+    { id: 'b2', label: 'วาง', g: '✕', c: '#5AA8F5', act: 'send', down: 'DROP', up: '', rep: 0 },
+    { id: 'b3', label: 'กาง', g: '□', c: '#F5B83D', act: 'send', down: 'OPEN', up: '', rep: 0 },
+    { id: 'b4', label: 'หนีบ', g: '○', c: '#F27BB0', act: 'send', down: 'CLOSE', up: '', rep: 0 },
+    { id: 'b5', label: 'แขนขึ้น', g: '▲', c: '#B6A3EE', act: 'send', down: 'S2+4', up: '', rep: 60 },
+    { id: 'b6', label: 'แขนลง', g: '▼', c: '#B6A3EE', act: 'send', down: 'S2-4', up: '', rep: 60 },
+    { id: 'b7', label: 'บี๊บ', g: '♪', c: '#F7D774', act: 'send', down: 'BEEP', up: '', rep: 0 },
+    { id: 'b8', label: 'เร่ง', g: '⚡', c: '#3FD9C4', act: 'boost', down: '', up: '', rep: 0 }
+  ],
+  layout: {}
+};
+const BASE_LAYOUT = {
+  joy: { x: .2, y: .55, s: 1 }, dpad: { x: .2, y: .55, s: 1 },
+  thr: { x: .11, y: .55, s: 1 }, steer: { x: .38, y: .55, s: 1 },
+  tankL: { x: .1, y: .55, s: 1 }, tankR: { x: .27, y: .55, s: 1 },
+  stop: { x: .47, y: .84, s: 1 },
+  b1: { x: .83, y: .15, s: 1 }, b3: { x: .73, y: .4, s: 1 }, b4: { x: .93, y: .4, s: 1 }, b2: { x: .83, y: .64, s: 1 },
+  b5: { x: .6, y: .3, s: .85 }, b6: { x: .6, y: .6, s: .85 }, b8: { x: .7, y: .82, s: .85 }, b7: { x: .94, y: .82, s: .8 }
+};
+const DRIVE_CTLS = { joy: ['joy'], split: ['thr', 'steer'], dpad: ['dpad'], tank: ['tankL', 'tankR'] };
+
+function merge(a, b) {
+  for (const k in b) {
+    if (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && a[k] && typeof a[k] === 'object' && !Array.isArray(a[k])) merge(a[k], b[k]);
+    else a[k] = b[k];
+  }
+  return a;
+}
+function load() {
+  try {
+    const j = JSON.parse(localStorage.getItem(KEY));
+    if (j && j.v === 1) return merge(clone(DEFAULTS), j);
+  } catch (e) {}
+  return clone(DEFAULTS);
+}
+let S = load();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+// ---------------- สถานะ ----------------
+const inp = { joy: [0, 0], thr: [0, 0], steer: [0, 0], dpad: [0, 0], tankL: [0, 0], tankR: [0, 0], key: [0, 0], pad: [0, 0] };
+let boost = 0, editing = false, sel = null;
+const toggled = {}, repTimers = {};
+const txLog = [];
+let out = [0, 0];
+
+// ---------------- คำนวณกำลังล้อ ----------------
+function shape(v) {
+  const dz = S.drive.dead / 100, e = S.drive.expo / 10;
+  const a = Math.abs(v);
+  if (a <= dz) return 0;
+  const n = Math.min(1, (a - dz) / (1 - dz));
+  return Math.sign(v) * Math.pow(n, e);
+}
+function arcade(x, y, D, T) {
+  const t = y * D, r = x * T;
+  let L = t + r, R = t - r;
+  const m = Math.max(1, Math.abs(L), Math.abs(R));
+  return [L / m, R / m];
+}
+function dpadMix(x, y, D, T) {
+  if (y && x) { const o = y * D, i = y * D * .3; return x > 0 ? [o, i] : [i, o]; }
+  if (x) return S.drive.dpadTurn === 'pivot' ? (x > 0 ? [T, 0] : [0, T]) : [x * T, -x * T];
+  return [y * D, y * D];
+}
+function speedNow() {
+  const P = S.drive.presets[S.drive.preset] || S.drive.presets[1];
+  let D = P.d / 100, T = P.t / 100;
+  if (boost > 0) { D = 1; T = Math.max(T, S.drive.presets[2].t / 100); }
+  return [D, T];
+}
+function compute() {
+  const d = S.drive, [D, T] = speedNow();
+  let L = 0, R = 0;
+  if (inp.key[0] || inp.key[1]) [L, R] = dpadMix(inp.key[0], inp.key[1], D, T);
+  else if (inp.pad[0] || inp.pad[1]) [L, R] = arcade(shape(inp.pad[0]), shape(inp.pad[1]), D, T);
+  else if (d.mode === 'joy') [L, R] = arcade(shape(inp.joy[0]), shape(inp.joy[1]), D, T);
+  else if (d.mode === 'split') [L, R] = arcade(shape(inp.steer[0]), shape(inp.thr[1]), D, T);
+  else if (d.mode === 'dpad') [L, R] = dpadMix(inp.dpad[0], inp.dpad[1], D, T);
+  else if (d.mode === 'tank') { L = shape(inp.tankL[1]) * D; R = shape(inp.tankR[1]) * D; }
+  if (d.invert) [L, R] = [-R, -L];
+  if (d.swap) [L, R] = [R, L];
+  if (d.trim > 0) R *= 1 - d.trim / 100;
+  if (d.trim < 0) L *= 1 + d.trim / 100;
+  return [clamp(Math.round(L * 100), -100, 100), clamp(Math.round(R * 100), -100, 100)];
+}
+
+// ---------------- ส่งคำสั่ง ----------------
+let lastL = 0, lastR = 0, lastT = 0, zeroAgain = false;
+function pump() {
+  const [L, R] = out = compute();
+  showOut(L, R);
+  if (!link.on) { lastL = L; lastR = R; return; }
+  const now = performance.now(), gap = 1000 / S.drive.rate;
+  const changed = L !== lastL || R !== lastR;
+  const stop = !L && !R;
+  if (changed && (stop || now - lastT >= gap)) {
+    sendMove(L, R, now);
+    zeroAgain = stop;
+  } else if (!changed && !stop && now - lastT >= 100) {
+    sendMove(L, R, now);                       // ส่งซ้ำ ให้หุ่นรู้ว่ายังกดอยู่
+  } else if (stop && zeroAgain && now - lastT >= 80) {
+    sendMove(0, 0, now);                       // ย้ำหยุดอีกครั้งกันหลุด
+    zeroAgain = false;
+  }
+}
+function sendMove(L, R, now) {
+  lastL = L; lastR = R; lastT = now;
+  link.send('M,' + L + ',' + R, true);
+}
+setInterval(pump, 20);
+
+function sendBtn(p) { if (p) link.send('B,' + p); }
+function emergency() {
+  releaseAll();
+  link.send('X');
+  lastT = 0; lastL = 1; pump();
+}
+
+// ---------------- ช่องทางเชื่อมต่อ ----------------
+const link = {
+  kind: null, on: false, state: 'off', name: '',
+  send(line, isMove) {
+    if (!this.on) return;
+    txLog.push(line); if (txLog.length > 200) txLog.shift();
+    if (!isMove) logLine('→ ' + line);
+    if (this.kind === 'wifi') wsSend(line, isMove);
+    else if (this.kind === 'ble') bleSend(line, isMove);
+    else if (this.kind === 'demo') demoSend(line);
+  }
+};
+function setLink(kind, state) {
+  link.kind = kind; link.state = state; link.on = state === 'on';
+  if (!link.on) releaseAll();
+  if (link.on) { lastPong = performance.now(); keepAwake(true); } else keepAwake(false);
+  updateLinkPill();
+}
+function updateLinkPill() {
+  const el = $('#link'), k = link.kind, st = link.state;
+  el.className = 'pill';
+  let t = 'ยังไม่เชื่อมต่อ';
+  const nm = k === 'ble' ? 'Bluetooth' : k === 'wifi' ? 'WiFi' : 'ทดลอง';
+  if (st === 'wait') { el.classList.add('wait'); t = 'กำลังต่อ ' + nm + '…'; }
+  else if (st === 'on') {
+    el.classList.add(k === 'demo' ? 'demo' : 'on');
+    t = nm + (link.name && k !== 'demo' ? ' ' + link.name : '');
+    if (weak) { el.classList.add('weak'); t = nm + ' สัญญาณช้า'; }
+  }
+  $('#linkTxt').textContent = t;
+}
+
+// --- WiFi (WebSocket ไปที่หุ่น) ---
+let ws = null, wsWant = false, wsTimer = null, wsHost = '';
+const servedByRobot = () => location.protocol === 'http:' && /^\d+\.\d+\.\d+\.\d+(:\d+)?$/.test(location.host);
+function wifiConnect() {
+  $('#wifiErr').textContent = '';
+  let host = servedByRobot() ? location.host : $('#ipIn').value.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  if (!host) { $('#wifiErr').textContent = 'ใส่ IP ที่ขึ้นบนจอหุ่นก่อน'; return false; }
+  S.link.ip = host; save();
+  if (location.protocol === 'https:') {
+    $('#wifiErr').innerHTML = 'หน้านี้เปิดผ่าน https จึงต่อ WiFi ตรงไม่ได้ <a href="http://' + esc(host) + '/">เปิด http://' + esc(host) + ' แทน</a>';
+    return false;
+  }
+  disconnectAll();
+  wsWant = true; wsHost = host; openWs();
+  return true;
+}
+function openWs() {
+  clearTimeout(wsTimer);
+  setLink('wifi', 'wait');
+  let s;
+  try { s = new WebSocket('ws://' + wsHost + '/ws'); } catch (e) { $('#wifiErr').textContent = 'IP ไม่ถูกต้อง'; setLink('wifi', 'off'); return; }
+  ws = s;
+  const guard = setTimeout(() => { if (s.readyState !== 1) s.close(); }, 4000);
+  s.onopen = () => { clearTimeout(guard); if (ws !== s) return; setLink('wifi', 'on'); link.send('H'); ping(); };
+  s.onmessage = e => onRx(typeof e.data === 'string' ? e.data : '');
+  s.onclose = () => {
+    clearTimeout(guard);
+    if (ws !== s) return;
+    ws = null;
+    if (wsWant) { setLink('wifi', 'wait'); wsTimer = setTimeout(openWs, 1200); }
+    else setLink(null, 'off');
+  };
+  s.onerror = () => {};
+}
+let wsPending = null;
+function wsSend(line, isMove) {
+  if (!ws || ws.readyState !== 1) return;
+  if (isMove && ws.bufferedAmount > 64) { wsPending = line; return; }  // คิวค้าง ส่งตัวล่าสุดทีหลัง
+  if (wsPending && !isMove) { ws.send(wsPending); wsPending = null; }
+  ws.send(line);
+}
+setInterval(() => { if (wsPending && ws && ws.readyState === 1 && ws.bufferedAmount <= 64) { ws.send(wsPending); wsPending = null; } }, 15);
+
+// --- Bluetooth (Nordic UART) ---
+let bleDev = null, bleRx = null, bleWant = false, bleQ = [], bleBusy = false, bleNoResp = false, bleTries = 0;
+function bleHelp() {
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  if (!navigator.bluetooth) {
+    if (ios) return 'iPhone ต้องเปิดหน้านี้ในแอป Bluefy (Safari/Chrome บน iPhone ใช้ Bluetooth ไม่ได้)';
+    if (!window.isSecureContext) return 'Bluetooth ใช้ได้เมื่อเปิดหน้านี้ผ่านลิงก์ https หรือ http://localhost เท่านั้น ถ้าเปิดจากหุ่นผ่าน WiFi ให้เลือก WiFi แทน';
+    return 'เบราว์เซอร์นี้ไม่รองรับ Bluetooth ให้ใช้ Chrome หรือ Edge';
+  }
+  return '';
+}
+async function bleConnect() {
+  $('#bleErr').textContent = bleHelp();
+  if (!navigator.bluetooth) return false;
+  let dev;
+  try {
+    dev = await navigator.bluetooth.requestDevice({ filters: [{ services: [NUS] }, { namePrefix: 'KRUBANK' }], optionalServices: [NUS] });
+  } catch (e) {
+    if (e.name !== 'NotFoundError') $('#bleErr').textContent = 'เปิดหน้าต่างเลือกอุปกรณ์ไม่ได้: ' + e.message;
+    return false;
+  }
+  disconnectAll();
+  bleDev = dev; bleWant = true; bleTries = 0;
+  dev.addEventListener('gattserverdisconnected', onBleGone);
+  bleOpen();
+  return true;
+}
+async function bleOpen() {
+  if (!bleDev) return;
+  setLink('ble', 'wait');
+  try {
+    const srv = await bleDev.gatt.connect();
+    const svc = await srv.getPrimaryService(NUS);
+    const rx = await svc.getCharacteristic(NUS_RX);
+    const tx = await svc.getCharacteristic(NUS_TX);
+    tx.addEventListener('characteristicvaluechanged', e => onRx(dec.decode(e.target.value)));
+    await tx.startNotifications();
+    bleRx = rx;
+    bleNoResp = !!(rx.properties && rx.properties.writeWithoutResponse && rx.writeValueWithoutResponse);
+    bleQ = []; bleBusy = false; bleTries = 0;
+    link.name = bleDev.name || '';
+    setLink('ble', 'on');
+    link.send('H'); ping();
+  } catch (e) {
+    bleRx = null;
+    if (bleWant && ++bleTries <= 3) { setTimeout(bleOpen, 900); return; }
+    bleWant = false;
+    setLink(null, 'off');
+    toast('ต่อ Bluetooth ไม่สำเร็จ ลองปิดเปิดหุ่นแล้วต่อใหม่');
+  }
+}
+function onBleGone() {
+  bleRx = null;
+  if (bleWant) { setLink('ble', 'wait'); setTimeout(bleOpen, 600); }
+  else setLink(null, 'off');
+}
+function bleSend(line, isMove) {
+  if (isMove) {
+    const i = bleQ.findIndex(l => l[0] === 'M');
+    if (i >= 0) { bleQ[i] = line; return bleFlush(); }   // แทนคำสั่งเก่าที่ยังไม่ได้ส่ง
+  }
+  bleQ.push(line);
+  if (bleQ.length > 16) bleQ.splice(0, bleQ.length - 16);
+  bleFlush();
+}
+async function bleFlush() {
+  if (bleBusy || !bleRx || !bleQ.length) return;
+  let pkt = '';
+  while (bleQ.length && pkt.length + bleQ[0].length + 1 <= 20) pkt += bleQ.shift() + '\n';   // รวมหลายคำสั่งใน 20 ไบต์
+  if (!pkt) pkt = bleQ.shift().slice(0, 19) + '\n';
+  bleBusy = true;
+  try {
+    const data = enc.encode(pkt);
+    if (bleNoResp) await bleRx.writeValueWithoutResponse(data);
+    else if (bleRx.writeValueWithResponse) await bleRx.writeValueWithResponse(data);
+    else await bleRx.writeValue(data);
+  } catch (e) { logLine('! ' + e.message); }
+  bleBusy = false;
+  if (bleQ.length) bleFlush();
+}
+
+// --- โหมดทดลอง ---
+function demoSend(line) {
+  const reply = t => setTimeout(() => onRx(t), 8 + Math.random() * 6);
+  if (line[0] === 'P') reply('p' + line.slice(1));
+  else if (line[0] === 'H') reply('I,DEMO,DEMO');
+  else if (line[0] === 'B') reply('L,' + line.slice(2));
+}
+
+function disconnectAll() {
+  wsWant = false; bleWant = false;
+  clearTimeout(wsTimer);
+  if (ws) { const s = ws; ws = null; try { s.close(); } catch (e) {} }
+  if (bleDev) { const d = bleDev; bleDev = null; bleRx = null; try { d.removeEventListener('gattserverdisconnected', onBleGone); if (d.gatt.connected) d.gatt.disconnect(); } catch (e) {} }
+  link.name = '';
+  setLink(null, 'off');
+}
+
+// --- ข้อความจากหุ่น ---
+let pingId = 0, pingT = {}, rtt = 0, lastPong = 0, weak = false;
+function onRx(text) {
+  for (const raw of text.split('\n')) {
+    const s = raw.trim();
+    if (!s) continue;
+    if (s[0] === 'p') {
+      const id = s.slice(2), t0 = pingT[id];
+      if (t0) { const r = performance.now() - t0; rtt = rtt ? rtt * .6 + r * .4 : r; delete pingT[id]; }
+      lastPong = performance.now();
+      $('#rtt').textContent = Math.round(rtt) + ' ms';
+      continue;
+    }
+    logLine('← ' + s);
+    const f = s.split(',');
+    if (f[0] === 'I') { link.name = f[1] === 'DEMO' ? '' : (f[1] || ''); updateLinkPill(); }
+    else if (f[0] === 'V') $('#batt').textContent = '🔋' + parseFloat(f[1]).toFixed(1) + 'V';
+    else if (f[0] === 'L') { const c = s.slice(2); if (c[0] === '?') toast('หุ่นไม่รู้จักคำสั่ง ' + c.slice(1)); }
+  }
+}
+function ping() {
+  if (!link.on) return;
+  const id = String(++pingId % 100000);
+  pingT[id] = performance.now();
+  link.send('P,' + id);
+  for (const k in pingT) if (performance.now() - pingT[k] > 5000) delete pingT[k];
+}
+setInterval(() => {
+  ping();
+  const w = link.on && performance.now() - lastPong > 3000;
+  if (w !== weak) { weak = w; updateLinkPill(); }
+  if (!link.on) $('#rtt').textContent = '– ms';
+}, 1000);
+
+// ---------------- สร้างตัวควบคุมบนจอ ----------------
+const stage = $('#stage');
+let ctlEls = {}, U = 300;
+function lay(id) {
+  if (!S.layout[id]) S.layout[id] = clone(BASE_LAYOUT[id] || { x: .6, y: .5, s: 1 });
+  return S.layout[id];
+}
+function visibleIds() { return [...DRIVE_CTLS[S.drive.mode], 'stop', ...S.buttons.map(b => b.id)]; }
+function sizeOf(id) {
+  const s = lay(id).s;
+  if (id === 'joy' || id === 'dpad') return [U * .66 * s, U * .66 * s];
+  if (id === 'thr' || id === 'tankL' || id === 'tankR') return [U * .25 * s, U * .76 * s];
+  if (id === 'steer') return [U * .76 * s, U * .25 * s];
+  if (id === 'stop') { const d = Math.max(46, U * .17 * s); return [d, d]; }
+  const d = Math.max(48, U * .2 * s); return [d, d];
+}
+function render() {
+  releaseAll();
+  stage.innerHTML = '';
+  ctlEls = {};
+  for (const id of visibleIds()) {
+    const L = lay(id);
+    if (L.h) continue;
+    const el = document.createElement('div');
+    el.className = 'ctl';
+    el.dataset.id = id;
+    if (id === 'joy') buildStick(el, id, 'xy');
+    else if (id === 'thr' || id === 'tankL' || id === 'tankR') buildStick(el, id, 'y');
+    else if (id === 'steer') buildStick(el, id, 'x');
+    else if (id === 'dpad') buildDpad(el);
+    else if (id === 'stop') buildStop(el);
+    else { const b = S.buttons.find(x => x.id === id); if (!b) continue; buildBtn(el, b); }
+    stage.appendChild(el);
+    ctlEls[id] = el;
+  }
+  place();
+  if (sel && !ctlEls[sel]) sel = null;
+  markSel();
+}
+function place() {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  U = Math.min(H, W * .56);
+  for (const id in ctlEls) {
+    const el = ctlEls[id], L = lay(id), [w, h] = sizeOf(id);
+    el.style.left = clamp(L.x * W, w / 2 + 4, W - w / 2 - 4) + 'px';     // ไม่ให้ล้นขอบจอ
+    el.style.top = clamp(L.y * H, h / 2 + 4, H - h / 2 - 22) + 'px';
+    el.style.width = w + 'px';
+    el.style.height = h + 'px';
+    el.style.setProperty('--d', Math.min(w, h) + 'px');
+    el.style.setProperty('--k', Math.min(w, h) * (id === 'joy' ? .36 : .78) + 'px');
+  }
+}
+window.addEventListener('resize', place);
+
+function capture(el, down, move, up) {
+  let pid = null;
+  el.addEventListener('pointerdown', e => {
+    if (editing || pid !== null) return;
+    pid = e.pointerId;
+    try { el.setPointerCapture(pid); } catch (x) {}
+    e.preventDefault();
+    down(e);
+  });
+  el.addEventListener('pointermove', e => { if (e.pointerId === pid && move) move(e); });
+  const end = e => { if (e.pointerId !== pid) return; pid = null; up(e); };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+  el.addEventListener('lostpointercapture', end);
+  el._release = () => { if (pid !== null) { pid = null; up(); } };
+}
+
+function buildStick(el, id, axis) {
+  el.classList.add('stick');
+  if (axis !== 'xy') el.classList.add('ax-' + axis);
+  el.innerHTML = '<div class="face"><div class="knob"></div></div>';
+  const face = el.firstChild, knob = face.firstChild;
+  const upd = e => {
+    const r = face.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const knobR = parseFloat(getComputedStyle(el).getPropertyValue('--k')) / 2;
+    const f = axis === 'xy' ? .55 : 1;                        // คันโยกแกนเดียว ปุ่มอยู่ในราง
+    const rx = Math.max(8, r.width / 2 - knobR * f), ry = Math.max(8, r.height / 2 - knobR * f);
+    let dx = axis === 'y' ? 0 : (e.clientX - cx) / rx;
+    let dy = axis === 'x' ? 0 : (e.clientY - cy) / ry;
+    const m = Math.hypot(dx, dy);
+    if (m > 1) { dx /= m; dy /= m; }
+    knob.style.transform = 'translate(' + (dx * rx) + 'px,' + (dy * ry) + 'px)';
+    inp[id] = [dx, -dy];
+    pump();
+  };
+  capture(el, e => { el.classList.add('active'); upd(e); }, upd, () => {
+    el.classList.remove('active');
+    knob.style.transform = '';
+    inp[id] = [0, 0];
+    pump();
+  });
+}
+
+function buildDpad(el) {
+  el.classList.add('dpad');
+  el.innerHTML = '<div class="face"><div class="arrow u">▲</div><div class="arrow d">▼</div><div class="arrow l">◀</div><div class="arrow r">▶</div></div>';
+  const face = el.firstChild, ar = {};
+  for (const k of ['u', 'd', 'l', 'r']) ar[k] = face.querySelector('.arrow.' + k);
+  const upd = e => {
+    const r = face.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+    let x = 0, y = 0;
+    if (Math.hypot(dx, dy) > r.width * .1) {
+      const a = (Math.atan2(-dy, dx) * 180 / Math.PI + 360) % 360;   // 0 = ขวา, 90 = ขึ้น
+      const c = Math.round(a / 90);
+      if (Math.abs(a - c * 90) <= 30) [x, y] = [[1, 0], [0, 1], [-1, 0], [0, -1]][c % 4];   // ทิศตรง กว้าง ±30°
+      else { x = Math.sign(Math.cos(a * Math.PI / 180)); y = Math.sign(Math.sin(a * Math.PI / 180)); }   // ทิศเฉียง
+    }
+    set(x, y);
+  };
+  const set = (x, y) => {
+    ar.u.classList.toggle('on', y > 0); ar.d.classList.toggle('on', y < 0);
+    ar.r.classList.toggle('on', x > 0); ar.l.classList.toggle('on', x < 0);
+    if (x !== inp.dpad[0] || y !== inp.dpad[1]) { inp.dpad = [x, y]; buzz(8); pump(); }
+  };
+  capture(el, upd, upd, () => set(0, 0));
+}
+
+function buildStop(el) {
+  el.classList.add('stop');
+  el.innerHTML = '<div class="face">หยุด</div>';
+  capture(el, () => { el.classList.add('down'); buzz(30); emergency(); }, null, () => el.classList.remove('down'));
+}
+
+function buildBtn(el, b) {
+  el.classList.add('btn');
+  const g = b.g || '●';
+  if (g.length > 1 && !GLYPHS.includes(g)) el.classList.add('txt');
+  el.style.setProperty('--c', b.c || COLORS[0]);
+  el.innerHTML = '<div class="face">' + esc(g) + '</div><span class="lbl">' + esc(b.label || '') + '</span>';
+  if (b.act === 'toggle' && toggled[b.id]) el.classList.add('lit');
+  capture(el, () => { el.classList.add('down'); buzz(12); btnDown(b, el); }, null, () => { el.classList.remove('down'); btnUp(b); });
+}
+function btnDown(b, el) {
+  if (b.act === 'send') {
+    sendBtn(b.down);
+    if (b.rep > 0 && b.down) { clearInterval(repTimers[b.id]); repTimers[b.id] = setInterval(() => sendBtn(b.down), Math.max(40, b.rep)); }
+  } else if (b.act === 'toggle') {
+    toggled[b.id] = !toggled[b.id];
+    el.classList.toggle('lit', toggled[b.id]);
+    sendBtn(toggled[b.id] ? b.down : b.up);
+  } else if (b.act === 'boost') { boost++; pump(); updateSpeedUi(); }
+  else if (b.act === 'speed') { S.drive.preset = (S.drive.preset + 1) % 3; save(); updateSpeedUi(); pump(); toast('ความเร็ว: ' + S.drive.presets[S.drive.preset].n); }
+  else if (b.act === 'stop') emergency();
+}
+function btnUp(b) {
+  if (b.act === 'send') {
+    if (repTimers[b.id]) { clearInterval(repTimers[b.id]); delete repTimers[b.id]; }
+    if (b.up) sendBtn(b.up);
+  } else if (b.act === 'boost') { boost = Math.max(0, boost - 1); pump(); updateSpeedUi(); }
+}
+function releaseAll() {
+  for (const id in ctlEls) if (ctlEls[id]._release) ctlEls[id]._release();
+  for (const k in repTimers) { clearInterval(repTimers[k]); delete repTimers[k]; }
+  for (const k in inp) inp[k] = [0, 0];
+  if (boost) { boost = 0; updateSpeedUi(); }
+  heldKeys.clear();
+}
+function buzz(ms) { if (S.ui.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) {} }
+
+// ---------------- แถบสถานะ ----------------
+function showOut(L, R) {
+  $('#cmd').textContent = L + ', ' + R;
+  for (const [el, v] of [[$('#mL'), L], [$('#mR'), R]]) {
+    el.classList.toggle('neg', v < 0);
+    el.style.setProperty('--h', Math.abs(v) / 2 + '%');
+  }
+}
+function updateSpeedUi() {
+  const [D, T] = speedNow();
+  $('#drv').textContent = Math.round(D * 100) + '%';
+  $('#trn').textContent = Math.round(T * 100) + '%';
+  const ss = $('#speedSel');
+  ss.innerHTML = S.drive.presets.map((p, i) => '<option value="' + i + '">' + (boost ? '⚡ ' : '') + esc(p.n) + '</option>').join('');
+  ss.value = S.drive.preset;
+  $('#speedSeg').innerHTML = S.drive.presets.map((p, i) => '<button data-i="' + i + '" class="' + (i === S.drive.preset ? 'on' : '') + '">' + esc(p.n) + '</button>').join('');
+  const P = S.drive.presets[S.drive.preset];
+  $('#qDrv').value = P.d; $('#qDrvO').textContent = P.d + '%';
+  $('#qTrn').value = P.t; $('#qTrnO').textContent = P.t + '%';
+}
+$('#speedSel').addEventListener('change', e => { S.drive.preset = +e.target.value; save(); updateSpeedUi(); pump(); e.target.blur(); });
+$('#speedSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.drive.preset = +b.dataset.i; save(); updateSpeedUi(); pump(); });
+$('#qDrv').addEventListener('input', e => { S.drive.presets[S.drive.preset].d = +e.target.value; save(); updateSpeedUi(); pump(); });
+$('#qTrn').addEventListener('input', e => { S.drive.presets[S.drive.preset].t = +e.target.value; save(); updateSpeedUi(); pump(); });
+
+// ---------------- แผ่นหน้าต่าง ----------------
+function openSheet(id) { releaseAll(); $(id).classList.add('open'); }
+function closeSheets() { $$('.sheet').forEach(s => s.classList.remove('open')); }
+$$('.sheet').forEach(sh => sh.addEventListener('click', e => { if (e.target === sh || e.target.hasAttribute('data-close')) sh.classList.remove('open'); }));
+$('#status').onclick = () => { updateSpeedUi(); openSheet('#shSpeed'); };
+$('#gear').onclick = () => { fillSettings(); openSheet('#shSet'); };
+$('#link').onclick = () => { fillLink(); openSheet('#shLink'); };
+
+// เปิดผ่าน https (เช่น GitHub Pages) ต่อ WiFi ตรงไม่ได้ จึงเริ่มที่ Bluetooth
+let pickKind = location.protocol === 'https:' && S.link.kind === 'wifi' ? 'ble' : S.link.kind;
+function fillLink() {
+  if (servedByRobot()) pickKind = 'wifi';
+  $$('#linkChoice button').forEach(b => b.classList.toggle('on', b.dataset.k === pickKind));
+  $('#wifiBox').hidden = $('#wifiSteps').hidden = pickKind !== 'wifi';
+  $('#bleBox').hidden = $('#bleSteps').hidden = pickKind !== 'ble';
+  $('#ipIn').value = servedByRobot() ? location.host : S.link.ip;
+  $('#bleErr').textContent = pickKind === 'ble' ? bleHelp() : '';
+  $('#wifiErr').textContent = '';
+  $('#disconnectBtn').hidden = link.state === 'off';
+}
+$('#linkChoice').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  pickKind = b.dataset.k; S.link.kind = pickKind; save(); fillLink();
+});
+$('#connectBtn').onclick = async () => {
+  if (pickKind === 'demo') { disconnectAll(); setLink('demo', 'on'); link.send('H'); closeSheets(); return; }
+  if (pickKind === 'wifi') { if (wifiConnect()) closeSheets(); return; }
+  if (await bleConnect()) closeSheets();
+};
+$('#disconnectBtn').onclick = () => { disconnectAll(); fillLink(); };
+
+// ---------------- ตั้งค่า ----------------
+$('#setTabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  $$('#setTabs button').forEach(x => x.classList.toggle('on', x === b));
+  $$('#shSet section').forEach(s => s.hidden = s.dataset.p !== b.dataset.t);
+  if (b.dataset.t === 'more') { $('#jsonBox').value = JSON.stringify(S); renderLog(); }
+});
+function fillSettings() {
+  const d = S.drive;
+  $$('#modeChoice button').forEach(b => b.classList.toggle('on', b.dataset.m === d.mode));
+  $('#presetRows').innerHTML = d.presets.map((p, i) =>
+    '<div class="row"><label>' + esc(p.n) + '</label>DRV <input type="range" min="10" max="100" data-pi="' + i + '" data-f="d" value="' + p.d + '"><output>' + p.d + '%</output>' +
+    ' TRN <input type="range" min="10" max="100" data-pi="' + i + '" data-f="t" value="' + p.t + '"><output>' + p.t + '%</output></div>').join('');
+  const rng = (id, v, fmt) => { $(id).value = v; $(id + 'O').textContent = fmt(v); };
+  rng('#sDead', d.dead, v => v + '%');
+  rng('#sExpo', d.expo, v => (v / 10).toFixed(1));
+  rng('#sTrim', d.trim, v => (v > 0 ? '+' : '') + v);
+  rng('#sRate', d.rate, v => v + ' ครั้ง');
+  $('#sDpadTurn').value = d.dpadTurn;
+  $('#sInvert').checked = d.invert;
+  $('#sSwap').checked = d.swap;
+  $('#sVib').checked = S.ui.vib;
+  $('#sWake').checked = S.ui.wake;
+  renderBList();
+}
+$('#modeChoice').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  S.drive.mode = b.dataset.m; save(); fillSettings(); render();
+});
+$('#presetRows').addEventListener('input', e => {
+  const t = e.target; if (!t.dataset.pi) return;
+  S.drive.presets[+t.dataset.pi][t.dataset.f] = +t.value;
+  t.nextElementSibling.textContent = t.value + '%';
+  save(); updateSpeedUi(); pump();
+});
+const bindRange = (id, key, fmt) => $(id).addEventListener('input', e => { S.drive[key] = +e.target.value; $(id + 'O').textContent = fmt(+e.target.value); save(); pump(); });
+bindRange('#sDead', 'dead', v => v + '%');
+bindRange('#sExpo', 'expo', v => (v / 10).toFixed(1));
+bindRange('#sTrim', 'trim', v => (v > 0 ? '+' : '') + v);
+bindRange('#sRate', 'rate', v => v + ' ครั้ง');
+$('#sDpadTurn').onchange = e => { S.drive.dpadTurn = e.target.value; save(); };
+$('#sInvert').onchange = e => { S.drive.invert = e.target.checked; save(); };
+$('#sSwap').onchange = e => { S.drive.swap = e.target.checked; save(); };
+$('#sVib').onchange = e => { S.ui.vib = e.target.checked; save(); };
+$('#sWake').onchange = e => { S.ui.wake = e.target.checked; save(); keepAwake(link.on); };
+
+function actText(b) {
+  return { send: b.down + (b.up ? ' / ' + b.up : '') + (b.rep ? ' ซ้ำทุก ' + b.rep + ' ms' : ''), toggle: 'สลับ ' + b.down + ' / ' + b.up,
+    boost: 'กดค้างเร่งสุด', speed: 'สลับความเร็ว', stop: 'หยุดฉุกเฉิน' }[b.act] || '';
+}
+function renderBList() {
+  $('#blist').innerHTML = S.buttons.map(b =>
+    '<div class="bitem"><span class="mini" style="--c:' + esc(b.c) + '">' + esc(b.g) + '</span><span class="t"><b>' + esc(b.label || '(ไม่มีชื่อ)') + '</b><code>' + esc(actText(b)) + '</code></span>' +
+    (lay(b.id).h ? '<button data-show="' + b.id + '">แสดง</button>' : '') + '<button data-edit="' + b.id + '">แก้</button></div>').join('');
+}
+$('#blist').addEventListener('click', e => {
+  const t = e.target;
+  if (t.dataset.edit) openBtnEditor(t.dataset.edit);
+  if (t.dataset.show) { lay(t.dataset.show).h = false; save(); render(); renderBList(); }
+});
+$('#addBtn').onclick = () => addButton();
+
+// --- แก้ปุ่ม ---
+let editB = null, editIsNew = false;
+function addButton() {
+  let n = 1; while (S.buttons.some(b => b.id === 'b' + n)) n++;
+  const b = { id: 'b' + n, label: 'ปุ่ม ' + n, g: 'A', c: COLORS[n % COLORS.length], act: 'send', down: 'A', up: '', rep: 0 };
+  editIsNew = true;
+  openBtnEditor(null, b);
+}
+function openBtnEditor(id, fresh) {
+  editB = fresh ? fresh : clone(S.buttons.find(b => b.id === id));
+  if (!fresh) editIsNew = false;
+  $('#bLabel').value = editB.label;
+  $('#bGlyphTxt').value = GLYPHS.includes(editB.g) ? '' : editB.g;
+  $('#bAct').value = editB.act;
+  $('#bDown').value = editB.down; $('#bUp').value = editB.up; $('#bRep').value = editB.rep;
+  $('#bErr').textContent = '';
+  $('#bDel').hidden = editIsNew;
+  drawBtnEditor();
+  closeSheets();
+  openSheet('#shBtn');
+}
+function drawBtnEditor() {
+  $('#bGlyphs').innerHTML = GLYPHS.map(g => '<button data-g="' + g + '" class="' + (g === editB.g ? 'on' : '') + '">' + g + '</button>').join('');
+  $('#bColors').innerHTML = COLORS.map(c => '<button data-c="' + c + '" style="background:' + c + '" class="' + (c === editB.c ? 'on' : '') + '" aria-label="สี ' + c + '"></button>').join('');
+  const a = $('#bAct').value;
+  $('#bSendBox').hidden = !(a === 'send' || a === 'toggle');
+  $('#bRepRow').hidden = a !== 'send';
+  $('#bDownL').textContent = a === 'toggle' ? 'ข้อความตอนเปิด' : 'ข้อความตอนกด';
+  $('#bUpL').textContent = a === 'toggle' ? 'ข้อความตอนปิด' : 'ข้อความตอนปล่อย';
+}
+$('#bGlyphs').addEventListener('click', e => { const g = e.target.dataset.g; if (g) { editB.g = g; $('#bGlyphTxt').value = ''; drawBtnEditor(); } });
+$('#bColors').addEventListener('click', e => { const c = e.target.dataset.c; if (c) { editB.c = c; drawBtnEditor(); } });
+$('#bAct').onchange = drawBtnEditor;
+const PAYLOAD_OK = /^[A-Za-z0-9=+\-,@_.:#]*$/;
+function readBtnEditor() {
+  const b = editB;
+  b.label = $('#bLabel').value.trim();
+  const gt = $('#bGlyphTxt').value.trim(); if (gt) b.g = gt;
+  b.act = $('#bAct').value;
+  b.down = $('#bDown').value.trim(); b.up = $('#bUp').value.trim();
+  b.rep = clamp(parseInt($('#bRep').value) || 0, 0, 2000);
+  if (b.rep && b.rep < 40) b.rep = 40;
+  if ((b.act === 'send' || b.act === 'toggle')) {
+    if (!b.down && !b.up) return 'ใส่ข้อความที่จะส่งอย่างน้อย 1 ช่อง';
+    if (!PAYLOAD_OK.test(b.down) || !PAYLOAD_OK.test(b.up)) return 'ข้อความใช้ได้แค่อังกฤษ ตัวเลข และ = + - , @ _ . : #';
+    if (b.down.length > 16 || b.up.length > 16) return 'ข้อความยาวได้ไม่เกิน 16 ตัว';
+  }
+  return '';
+}
+$('#bSave').onclick = () => {
+  const err = readBtnEditor();
+  if (err) { $('#bErr').textContent = err; return; }
+  snapshot();
+  const i = S.buttons.findIndex(b => b.id === editB.id);
+  if (i >= 0) S.buttons[i] = editB; else { S.buttons.push(editB); lay(editB.id).h = false; }
+  delete toggled[editB.id];
+  save(); render(); closeSheets();
+  if (editIsNew) { sel = editB.id; markSel(); toast('เพิ่มปุ่มแล้ว ลากไปวางตำแหน่งที่ต้องการได้'); if (!editing) setEditing(true); }
+};
+$('#bTest').onclick = () => {
+  const err = readBtnEditor();
+  if (err) { $('#bErr').textContent = err; return; }
+  if (!link.on) { $('#bErr').textContent = 'ยังไม่ได้เชื่อมต่อหุ่น'; return; }
+  if (editB.down) sendBtn(editB.down);
+  $('#bErr').textContent = 'ส่ง ' + (editB.down || '') + ' แล้ว';
+};
+$('#bDel').onclick = () => {
+  if (!confirm('ลบปุ่ม “' + (editB.label || editB.g) + '” ?')) return;
+  snapshot();
+  S.buttons = S.buttons.filter(b => b.id !== editB.id);
+  delete S.layout[editB.id];
+  save(); render(); closeSheets();
+};
+
+// --- อื่น ๆ ---
+const logLines = [];
+function logLine(s) {
+  const t = new Date();
+  logLines.push(String(t.getMinutes()).padStart(2, '0') + ':' + String(t.getSeconds()).padStart(2, '0') + '  ' + s);
+  if (logLines.length > 60) logLines.shift();
+  if ($('#shSet').classList.contains('open')) renderLog();
+}
+function renderLog() { const b = $('#logbox'); b.textContent = logLines.join('\n'); b.scrollTop = b.scrollHeight; }
+$('#copyJson').onclick = async () => {
+  const t = $('#jsonBox'); t.value = JSON.stringify(S);
+  try { await navigator.clipboard.writeText(t.value); toast('คัดลอกแล้ว'); } catch (e) { t.select(); document.execCommand('copy'); toast('คัดลอกแล้ว'); }
+};
+$('#importJson').onclick = () => {
+  try {
+    const j = JSON.parse($('#jsonBox').value);
+    if (!j || j.v !== 1 || !Array.isArray(j.buttons)) throw 0;
+    S = merge(clone(DEFAULTS), j); save(); fillSettings(); updateSpeedUi(); render(); toast('นำเข้าการตั้งค่าแล้ว');
+  } catch (e) { toast('ข้อความนี้ไม่ใช่การตั้งค่าของ KrubankRC'); }
+};
+$('#resetAll').onclick = () => {
+  if (!confirm('ล้างการตั้งค่า ปุ่ม และตำแหน่งทั้งหมด กลับเป็นค่าเริ่มต้น?')) return;
+  S = clone(DEFAULTS); save(); fillSettings(); updateSpeedUi(); render(); toast('กลับเป็นค่าเริ่มต้นแล้ว');
+};
+
+// ---------------- โหมดจัดวาง ----------------
+let undoS = [], redoS = [], drag = null;
+function snapshot() { undoS.push(JSON.stringify({ l: S.layout, b: S.buttons })); if (undoS.length > 60) undoS.shift(); redoS = []; toolState(); }
+function restore(js) { const o = JSON.parse(js); S.layout = o.l; S.buttons = o.b; save(); render(); }
+function setEditing(on) {
+  editing = on;
+  releaseAll();
+  document.body.classList.toggle('editing', on);
+  document.body.classList.toggle('grid', on && S.ui.grid);
+  if (!on) { sel = null; markSel(); save(); }
+  toolState();
+}
+function markSel() { for (const id in ctlEls) ctlEls[id].classList.toggle('sel', id === sel); toolState(); }
+function toolState() {
+  $('#tUndo').disabled = !undoS.length; $('#tRedo').disabled = !redoS.length;
+  $('#tSmall').disabled = $('#tBig').disabled = $('#tHide').disabled = !sel;
+  $('#tEditB').disabled = !(sel && S.buttons.some(b => b.id === sel));
+  $('#tGrid').classList.toggle('on', !!S.ui.grid);
+}
+$('#editBtn').onclick = () => setEditing(true);
+$('#tDone').onclick = () => setEditing(false);
+$('#tUndo').onclick = () => { if (!undoS.length) return; redoS.push(JSON.stringify({ l: S.layout, b: S.buttons })); restore(undoS.pop()); toolState(); };
+$('#tRedo').onclick = () => { if (!redoS.length) return; undoS.push(JSON.stringify({ l: S.layout, b: S.buttons })); restore(redoS.pop()); toolState(); };
+const resize = k => { if (!sel) return; snapshot(); const L = lay(sel); L.s = clamp(Math.round((L.s + k) * 100) / 100, .5, 1.8); save(); place(); };
+$('#tSmall').onclick = () => resize(-.1);
+$('#tBig').onclick = () => resize(.1);
+$('#tGrid').onclick = () => { S.ui.grid = !S.ui.grid; save(); document.body.classList.toggle('grid', S.ui.grid); toolState(); };
+$('#tHide').onclick = () => { if (!sel) return; snapshot(); lay(sel).h = true; sel = null; save(); render(); toast('ซ่อนแล้ว เรียกกลับได้ที่ ⟲ หรือ ตั้งค่า → ปุ่ม'); };
+$('#tReset').onclick = () => { snapshot(); S.layout = {}; save(); render(); };
+$('#tAdd').onclick = () => addButton();
+$('#tEditB').onclick = () => { if (sel) openBtnEditor(sel); };
+
+stage.addEventListener('pointerdown', e => {
+  if (!editing) return;
+  const el = e.target.closest('.ctl');
+  if (!el) { sel = null; markSel(); return; }
+  sel = el.dataset.id; markSel();
+  const L = lay(sel);
+  drag = { id: sel, pid: e.pointerId, sx: e.clientX, sy: e.clientY, ox: L.x, oy: L.y, moved: false, snap: JSON.stringify({ l: S.layout, b: S.buttons }) };
+  try { stage.setPointerCapture(e.pointerId); } catch (x) {}
+  e.preventDefault();
+});
+stage.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.pid) return;
+  const W = stage.clientWidth, H = stage.clientHeight;
+  let x = drag.ox + (e.clientX - drag.sx) / W, y = drag.oy + (e.clientY - drag.sy) / H;
+  if (S.ui.grid) { x = Math.round(x * 40) / 40; y = Math.round(y * 24) / 24; }
+  x = clamp(x, .03, .97); y = clamp(y, .04, .96);
+  if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 4) return;
+  if (!drag.moved) { drag.moved = true; undoS.push(drag.snap); redoS = []; }
+  const L = lay(drag.id); L.x = x; L.y = y;
+  const el = ctlEls[drag.id]; el.style.left = x * 100 + '%'; el.style.top = y * 100 + '%';
+});
+const dragEnd = e => { if (drag && e.pointerId === drag.pid) { if (drag.moved) { save(); toolState(); place(); } drag = null; } };
+stage.addEventListener('pointerup', dragEnd);
+stage.addEventListener('pointercancel', dragEnd);
+
+// ---------------- คีย์บอร์ด / จอยเกม ----------------
+const heldKeys = new Set();
+const KEYMAP = { ArrowUp: [0, 1], KeyW: [0, 1], ArrowDown: [0, -1], KeyS: [0, -1], ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0] };
+function keyVec() {
+  let x = 0, y = 0;
+  for (const k of heldKeys) if (KEYMAP[k]) { x += KEYMAP[k][0]; y += KEYMAP[k][1]; }
+  inp.key = [clamp(x, -1, 1), clamp(y, -1, 1)];
+  pump();
+}
+window.addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('input,textarea,select') || editing) return;
+  if (e.repeat) { if (KEYMAP[e.code]) e.preventDefault(); return; }
+  if (KEYMAP[e.code]) { heldKeys.add(e.code); keyVec(); e.preventDefault(); }
+  else if (e.code === 'Space') { emergency(); e.preventDefault(); }
+  else if (e.key === 'Shift') { boost++; updateSpeedUi(); pump(); }
+  else if (/^Digit[1-9]$/.test(e.code)) { const b = S.buttons[+e.code.slice(5) - 1]; if (b) { heldKeys.add(e.code); btnDown(b, ctlEls[b.id] || document.createElement('i')); } }
+});
+window.addEventListener('keyup', e => {
+  if (KEYMAP[e.code]) { heldKeys.delete(e.code); keyVec(); }
+  else if (e.key === 'Shift') { boost = Math.max(0, boost - 1); updateSpeedUi(); pump(); }
+  else if (/^Digit[1-9]$/.test(e.code) && heldKeys.has(e.code)) { heldKeys.delete(e.code); const b = S.buttons[+e.code.slice(5) - 1]; if (b) btnUp(b); }
+});
+const padPrev = [];
+function pollPad() {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  const p = pads && [...pads].find(x => x && x.connected);
+  if (p) {
+    const x = p.axes[0] || 0, y = -(p.axes[1] || 0);
+    const nx = Math.abs(x) > .06 ? x : 0, ny = Math.abs(y) > .06 ? y : 0;
+    if (nx !== inp.pad[0] || ny !== inp.pad[1]) { inp.pad = [nx, ny]; pump(); }
+    S.buttons.slice(0, 8).forEach((b, i) => {
+      const v = !!(p.buttons[i] && p.buttons[i].pressed);
+      if (v && !padPrev[i]) btnDown(b, ctlEls[b.id] || document.createElement('i'));
+      if (!v && padPrev[i]) btnUp(b);
+      padPrev[i] = v;
+    });
+  }
+  requestAnimationFrame(pollPad);
+}
+requestAnimationFrame(pollPad);
+
+// ---------------- อื่น ๆ ----------------
+let toastT = 0;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
+let wakeLock = null;
+async function keepAwake(on) {
+  try {
+    if (on && S.ui.wake && 'wakeLock' in navigator && !wakeLock && document.visibilityState === 'visible') {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') { releaseAll(); if (link.on) { link.send('X'); sendMove(0, 0, performance.now()); } }
+  else keepAwake(link.on);
+});
+window.addEventListener('blur', () => releaseAll());
+$('#fsBtn').onclick = async () => {
+  try {
+    if (!document.fullscreenElement) { await document.documentElement.requestFullscreen(); if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); }
+    else await document.exitFullscreen();
+  } catch (e) { toast('เบราว์เซอร์นี้ไม่รองรับเต็มจอ'); }
+};
+document.addEventListener('fullscreenchange', () => setTimeout(place, 100));
+document.addEventListener('contextmenu', e => { if (!e.target.closest('.panel')) e.preventDefault(); });
+
+// ---------------- เริ่มทำงาน ----------------
+updateSpeedUi();
+render();
+showOut(0, 0);
+updateLinkPill();
+toolState();
+if (servedByRobot()) {               // เปิดจากหุ่นโดยตรง → ต่อ WiFi ให้เลย
+  S.link.kind = 'wifi';
+  wifiConnect();
+}
+window.RC = { get S() { return S; }, inp, compute, link, txLog, get out() { return out; }, onRx };
+</script>
+</body>
+</html>

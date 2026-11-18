@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>สร้าง rc_page.h จากหน้าเว็บจอย</title>
+<style>
+body{font-family:"Noto Sans Thai","Sarabun","Leelawadee UI",Tahoma,sans-serif;background:#EFEAF8;color:#2B2240;margin:0;padding:24px;line-height:1.6}
+main{max-width:640px;margin:auto;background:#FBF9FE;border-radius:20px;padding:20px 24px;box-shadow:0 10px 30px rgba(43,34,64,.12)}
+h1{font-size:20px;margin:0 0 8px}
+ol{padding-left:22px}
+label.drop{display:block;border:2px dashed #C9BCE6;border-radius:14px;padding:22px;text-align:center;cursor:pointer;background:#fff;font-weight:600}
+#out{margin-top:14px;font-weight:600}
+code{background:#EEE8F9;border-radius:6px;padding:1px 6px}
+</style>
+</head>
+<body>
+<main>
+<h1>สร้างไฟล์ rc_page.h</h1>
+<p>ใช้เมื่อแก้หน้าเว็บจอยแล้วอยากให้หุ่นส่งหน้าเว็บใหม่ผ่าน WiFi</p>
+<ol>
+  <li>เลือกไฟล์หน้าเว็บจอยที่แก้แล้ว (<code>index.html</code> หรือ <code>KrubankRC.html</code>)</li>
+  <li>ไฟล์ <code>rc_page.h</code> จะดาวน์โหลดลงเครื่อง</li>
+  <li>เอาไปทับไฟล์เดิมในโฟลเดอร์ <code>KrubankRC</code> แล้วอัปโหลดโค้ดลงหุ่นใหม่</li>
+</ol>
+<label class="drop">เลือกไฟล์หน้าเว็บจอย<input type="file" id="f" accept=".html,text/html" hidden></label>
+<div id="out"></div>
+</main>
+<script>
+document.getElementById('f').onchange = async e => {
+  const out = document.getElementById('out');
+  const file = e.target.files[0]; if (!file) return;
+  if (!('CompressionStream' in window)) { out.textContent = 'เบราว์เซอร์นี้บีบอัดไฟล์ไม่ได้ ให้ใช้ Chrome หรือ Edge รุ่นใหม่'; return; }
+  let html = await file.text();
+  html = html.replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*?-->/g, '');
+  html = html.split('\n').map(l => l.trim()).filter(l => l).join('\n');
+  const gz = new Uint8Array(await new Response(new Blob([html]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+  const rows = [];
+  for (let i = 0; i < gz.length; i += 20) rows.push(Array.from(gz.slice(i, i + 20), b => '0x' + b.toString(16).toUpperCase().padStart(2, '0')).join(', '));
+  const h = '// rc_page.h — หน้าเว็บจอย (KrubankRC.html) บีบอัด gzip แล้ว\n// สร้างจาก make_rc_page.html เมื่อ ' + new Date().toLocaleString('th-TH') + '\n' +
+    '#pragma once\n#include <Arduino.h>\n\nconst uint8_t RC_PAGE_GZ[] = {\n  ' + rows.join(',\n  ') + '\n};\nconst size_t RC_PAGE_GZ_LEN = sizeof(RC_PAGE_GZ);\n';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([h], { type: 'text/plain' }));
+  a.download = 'rc_page.h'; a.click();
+  out.textContent = 'สร้าง rc_page.h แล้ว ขนาดหน้าเว็บหลังบีบอัด ' + (gz.length / 1024).toFixed(1) + ' KB';
+};
+</script>
+</body>
+</html>
