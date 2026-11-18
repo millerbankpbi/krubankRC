@@ -1,6 +1,6 @@
 # KrubankRC — จอยบังคับหุ่น MATRIX Mini R4 แบบเรียลไทม์
 
-**เปิดจอย (Bluetooth):** https://millerbankpbi.github.io/krubankrc/
+**เปิดจอย (Bluetooth):** https://millerbankpbi.github.io/krubankRC/
 
 บังคับหุ่นผ่าน Bluetooth จากลิงก์ด้านบน หรือผ่าน WiFi โดยเปิด `http://IP` ที่ขึ้นบนจอหุ่น (หุ่นส่งหน้าจอยให้เอง)
 
@@ -37,7 +37,7 @@
 
 ## ใช้ผ่าน Bluetooth
 1. เปิดหุ่น กด **DOWN** จอขึ้น `BLE KRUBANKR4`
-2. เปิด https://millerbankpbi.github.io/krubankrc/
+2. เปิด https://millerbankpbi.github.io/krubankRC/
    - Android ใช้ Chrome · iPhone ใช้แอป **Bluefy**
 3. แตะแถบสถานะ → Bluetooth → เชื่อมต่อ → เลือก `KRUBANKR4`
 
@@ -82,7 +82,7 @@
 หุ่นวิ่งตรงแล้วเฉ: ⚙ → การขับ → แก้หุ่นวิ่งเฉ
 
 ## แก้หน้าเว็บแล้วอยากให้หุ่นส่งหน้าใหม่
-แก้ `index.html` → เปิด https://millerbankpbi.github.io/krubankrc/make_rc_page.html → เลือกไฟล์ `index.html` → ได้ `rc_page.h` → วางทับใน `arduino/KrubankRC` → อัปโหลดลงหุ่นใหม่
+แก้ `index.html` → เปิด https://millerbankpbi.github.io/krubankRC/make_rc_page.html → เลือกไฟล์ `index.html` → ได้ `rc_page.h` → วางทับใน `arduino/KrubankRC` → อัปโหลดลงหุ่นใหม่
 
 ## แก้ปัญหา
 | อาการ | ทางแก้ |
